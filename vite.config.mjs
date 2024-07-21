@@ -2,8 +2,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 import autoprefixer from 'autoprefixer'
-import vercel from 'vite-plugin-vercel';
-
 
 export default defineConfig(() => {
   return {
@@ -47,6 +45,5 @@ export default defineConfig(() => {
         // https://vitejs.dev/config/server-options.html
       },
     },
-    plugins: [vercel()],
   }
 })
