@@ -19,32 +19,35 @@ import {
   CModalBody,
   CModalFooter,
   CFormInput,
-  CFormSelect,
 } from '@coreui/react';
-import { getMuseums, createMuseum, updateMuseum } from '../../../services/api';
+import { getMuseums, createMuseum, updateMuseum, deleteMuseum } from '../../../services/api';
 
 const MuseumList = () => {
   const [museums, setMuseums] = useState([]);
   const [modal, setModal] = useState(false);
   const [currentMuseum, setCurrentMuseum] = useState(null);
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [about, setabout] = useState('');
   const [file, setFile] = useState(null);
   const [operatingHours, setOperatingHours] = useState('');
   const [tickets, setTickets] = useState([{ type: '', price: '' }]);
-  const [collections, setCollections] = useState([{ name: '', description: '' }]);
+  const [collections, setCollections] = useState([{ name: '', about: '' }]);
 
   useEffect(() => {
     loadMuseums();
   }, []);
 
   const loadMuseums = async () => {
-    const response = await getMuseums();
-    setMuseums(response.data.data);
+    try {
+      const response = await getMuseums();
+      setMuseums(response.data.data);
+    } catch (error) {
+      console.error('Error loading museums:', error);
+    }
   };
 
   const handleSave = async () => {
-    const museumData = { name, description, file };
+    const museumData = { name, about, file };
 
     try {
       if (currentMuseum) {
@@ -56,7 +59,7 @@ const MuseumList = () => {
       setCurrentMuseum(null);
       loadMuseums();
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error saving museum:', error);
     }
   };
 
@@ -65,18 +68,18 @@ const MuseumList = () => {
       await deleteMuseum(id);
       loadMuseums();
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error deleting museum:', error);
     }
   };
 
   const openModal = (museum = null) => {
     setCurrentMuseum(museum);
     setName(museum ? museum.name : '');
-    setDescription(museum ? museum.description : '');
+    setabout(museum ? museum.about : '');
     setFile(null);
     setOperatingHours(museum ? museum.operatingHours : '');
     setTickets(museum ? museum.tickets : [{ type: '', price: '' }]);
-    setCollections(museum ? museum.collections : [{ name: '', description: '' }]);
+    setCollections(museum ? museum.collections : [{ name: '', about: '' }]);
     setModal(true);
   };
 
@@ -91,7 +94,7 @@ const MuseumList = () => {
   };
 
   const handleAddCollection = () => {
-    setCollections([...collections, { name: '', description: '' }]);
+    setCollections([...collections, { name: '', about: '' }]);
   };
 
   const handleCollectionChange = (index, field, value) => {
@@ -114,6 +117,11 @@ const MuseumList = () => {
           </CCardHeader>
 
           <CCardBody>
+          {alert.show && (
+              <CAlert color={alert.type} onClose={() => setAlert({ show: false, message: '', type: '' })}>
+                {alert.message}
+              </CAlert>
+            )}
             <CTable hover>
               <CTableHead>
                 <CTableRow>
@@ -158,9 +166,9 @@ const MuseumList = () => {
             className="mt-2"
           />
           <CFormTextarea
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            placeholder="about"
+            value={about}
+            onChange={(e) => setabout(e.target.value)}
             className="mt-2"
           />
           <CFormInput
@@ -168,48 +176,52 @@ const MuseumList = () => {
             onChange={(e) => setFile(e.target.files[0])}
             className="mt-2"
           />
-          <CFormInput
-            type="text"
+
+          <h6 className="mt-3">Operating Hours</h6>
+          <CFormTextarea
             placeholder="Operating Hours"
             value={operatingHours}
             onChange={(e) => setOperatingHours(e.target.value)}
             className="mt-2"
           />
-          <h5>Tickets</h5>
+
+          <h6 className="mt-3">Tickets</h6>
           {tickets.map((ticket, index) => (
-            <div key={index} className="mt-2">
+            <div key={index} className="d-flex align-items-center mt-2">
               <CFormInput
                 type="text"
                 placeholder="Type"
                 value={ticket.type}
                 onChange={(e) => handleTicketChange(index, 'type', e.target.value)}
+                className="me-2"
               />
               <CFormInput
-                type="text"
+                type="number"
                 placeholder="Price"
                 value={ticket.price}
                 onChange={(e) => handleTicketChange(index, 'price', e.target.value)}
-                className="mt-2"
               />
             </div>
           ))}
           <CButton color="secondary" onClick={handleAddTicket} className="mt-2">
             Add Ticket
           </CButton>
-          <h5>Collections</h5>
+
+          <h6 className="mt-3">Collections</h6>
           {collections.map((collection, index) => (
-            <div key={index} className="mt-2">
+            <div key={index} className="d-flex align-items-center mt-2">
               <CFormInput
                 type="text"
                 placeholder="Name"
                 value={collection.name}
                 onChange={(e) => handleCollectionChange(index, 'name', e.target.value)}
+                className="me-2"
               />
-              <CFormTextarea
-                placeholder="Description"
-                value={collection.description}
-                onChange={(e) => handleCollectionChange(index, 'description', e.target.value)}
-                className="mt-2"
+              <CFormInput
+                type="text"
+                placeholder="about"
+                value={collection.about}
+                onChange={(e) => handleCollectionChange(index, 'about', e.target.value)}
               />
             </div>
           ))}
@@ -218,11 +230,11 @@ const MuseumList = () => {
           </CButton>
         </CModalBody>
         <CModalFooter>
-          <CButton color="primary" onClick={handleSave}>
-            Save
-          </CButton>
           <CButton color="secondary" onClick={() => setModal(false)}>
             Cancel
+          </CButton>
+          <CButton color="primary" onClick={handleSave}>
+            Save
           </CButton>
         </CModalFooter>
       </CModal>

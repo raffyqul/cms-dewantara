@@ -19,8 +19,12 @@ import {
   CModalHeader,
   CModalBody,
   CModalFooter,
-  CFormInput
+  CFormInput,
+  CSpinner,
+  CAlert
 } from '@coreui/react'
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const PuppetList = () => {
   const [puppets, setpuppets] = useState([])
@@ -28,7 +32,12 @@ const PuppetList = () => {
   const [currentpuppet, setCurrentpuppet] = useState(null)
   const [name, setname] = useState('')
   const [description, setdescription] = useState('')
+  const [type, settype] = useState('')
   const [file, setFile] = useState(null)
+  const [loading, setLoading] = useState(false);
+  const [loadingDeletetId, setloadingDeletetId] = useState(null);
+  const [alert, setAlert] = useState({ show: false, message: '', type: '' });
+
 
   useEffect(() => {
     loadpuppets()
@@ -40,9 +49,11 @@ const PuppetList = () => {
   }
 
   const handleSave = async () => {
+    setLoading(true);
     const puppetData = {
       name,
       description,
+      type,
       file
     }
 
@@ -55,17 +66,25 @@ const PuppetList = () => {
       setModal(false)
       setCurrentpuppet(null)
       loadpuppets()
+      setAlert({ show: true, message: 'Wayang saved successfully!', type: 'success' });
     } catch (error) {
       console.error('Error:', error)
+    }finally{
+      setLoading(false);
     }
   }
 
   const handleDelete = async (id) => {
+    setloadingDeletetId(id);
+
     try {
       await deletePuppet(id)
       loadpuppets()
+      setAlert({ show: true, message: 'Wayang deleted successfully!', type: 'success' });
     } catch (error) {
       console.error('Error:', error)
+    }finally{
+      setloadingDeletetId(null)
     }
   }
 
@@ -73,6 +92,7 @@ const PuppetList = () => {
     setCurrentpuppet(puppet)
     setname(puppet ? puppet.name : '')
     setdescription(puppet ? puppet.description : '')
+    settype(puppet ? puppet.type : '')
     setFile(null)
     setModal(true)
   }
@@ -99,12 +119,18 @@ const PuppetList = () => {
           </CCardHeader>
 
           <CCardBody>
+          {alert.show && (
+              <CAlert color={alert.type} onClose={() => setAlert({ show: false, message: '', type: '' })}>
+                {alert.message}
+              </CAlert>
+            )}
             <CTable hover>
               <CTableHead>
                 <CTableRow>
                   <CTableHeaderCell>Id</CTableHeaderCell>
                   <CTableHeaderCell>Wayang</CTableHeaderCell>
                   <CTableHeaderCell>Nama Wayang</CTableHeaderCell>
+                  <CTableHeaderCell>Tipe Wayang</CTableHeaderCell>
                   <CTableHeaderCell>Konten</CTableHeaderCell>
                   <CTableHeaderCell>Aksi</CTableHeaderCell>
                 </CTableRow>
@@ -117,14 +143,23 @@ const PuppetList = () => {
                     <CImage size="md" width={100} height={100} src={puppet.imageUrl}/>
                     </CTableDataCell>
                     <CTableDataCell>{puppet.name}</CTableDataCell>
-                    <CTableDataCell>{truncateContent(puppet.description, 5)}</CTableDataCell>
+                    <CTableDataCell>{puppet.type}</CTableDataCell>
+                    <CTableDataCell>
+                    <div dangerouslySetInnerHTML={{ __html: truncateContent(puppet.description, 5) }} />
+
+                    </CTableDataCell>
                     <CTableDataCell>
                       <CButton color="warning" onClick={() => openModal(puppet)}>
                         Edit
                       </CButton>
-                      <CButton className='ml-2' color="danger" onClick={() => handleDelete(puppet.id)}>
-                        Delete
+                      <CButton
+                        color="danger"
+                        onClick={() => handleDelete(puppet.id)}
+                        disabled={loadingDeletetId === puppet.id}
+                         >
+                        {loadingDeletetId === puppet.id ? <CSpinner size="sm" /> : 'Delete'}
                       </CButton>
+
                     </CTableDataCell>
                   </CTableRow>
                 ))}
@@ -145,24 +180,31 @@ const PuppetList = () => {
             onChange={(e) => setname(e.target.value)}
             className='mt-2'
           />
-          <CFormTextarea
-            type="textarea"
-            placeholder="description"
+          <CFormInput
+            type="text"
+            placeholder="Tipe"
+            name='type'
+            value={type}
+            onChange={(e) => settype(e.target.value)}
             className='mt-2'
-            name='description'
-            value={description}
-            onChange={(e) => setdescription(e.target.value)}
           />
+
+          <ReactQuill
+            value={description}
+            onChange={setdescription}
+            className="mt-2 custom-quill-editor"
+          />
+
           <CFormInput
             type="file"
-            name='file'
+            name='image'
              className='mt-2'
             onChange={(e) => setFile(e.target.files[0])}
           />
         </CModalBody>
         <CModalFooter>
-          <CButton color="primary" onClick={handleSave}>
-            Save
+        <CButton color="primary" onClick={handleSave} disabled={loading}>
+            {loading ? <CSpinner size="sm" /> : 'Save'}
           </CButton>
           <CButton color="secondary" onClick={() => setModal(false)}>
             Cancel

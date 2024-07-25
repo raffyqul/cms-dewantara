@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import {
@@ -13,7 +13,8 @@ import {
   CInputGroupText,
   CFormInput,
   CRow,
-  CAlert
+  CAlert,
+  CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
@@ -22,20 +23,29 @@ const Login = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
   const handleLogin = async (e) => {
     e.preventDefault()
+    setLoading(true)
+    setError(null)
     try {
       const response = await axios.post('https://dewantara-api.vercel.app/api/v1/auth/login', {
         email,
         password,
       })
-      localStorage.setItem('token', response.data.data.token)
+      const { token, expiresIn } = response.data.data
+      const expiryTime = new Date(new Date().getTime() + 3600 * 1000);
+
+      localStorage.setItem('token', token)
+      localStorage.setItem('expiryTime', expiryTime)
+
       navigate('/dashboard')
     } catch (error) {
       setError('Login failed. Please check your email and password.')
     }
+    setLoading(false)
   }
 
   return (
@@ -76,8 +86,8 @@ const Login = () => {
                     </CInputGroup>
                     <CRow>
                       <CCol xs="6">
-                        <CButton type="submit" color="primary" className="px-4">
-                          Login
+                        <CButton type="submit" color="primary" className="px-4" disabled={loading}>
+                          {loading ? <CSpinner size="sm" /> : 'Login'}
                         </CButton>
                       </CCol>
                     </CRow>

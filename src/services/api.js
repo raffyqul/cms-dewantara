@@ -4,6 +4,13 @@ const API_URL = 'https://dewantara-api.vercel.app/api/v1'
 
 const getToken = () => localStorage.getItem('token')
 
+
+const addOneDay = (dateString) => {
+  const date = new Date(dateString);
+  date.setDate(date.getDate() + 1);
+  return date.toISOString().split('T')[0];
+};
+
 export const getArticles = async () => {
   return await axios.get(`${API_URL}/articles/all`, {
     headers: {
@@ -19,6 +26,8 @@ export const createArticle = async (articleData) => {
   if (articleData.file) {
     formData.append('file', articleData.file)
   }
+
+
   const token = getToken()
   const response = await axios.post(`${API_URL}/article`, formData, {
     headers: {
@@ -70,8 +79,8 @@ export const createEvent = async (eventData) => {
   formData.append('start_date', eventData.start_date)
   formData.append('end_date', eventData.start_date)
   formData.append('location', eventData.location)
-  if (eventData.files) {
-    formData.append('files', eventData.files)
+  if (eventData.file) {
+    formData.append('file', eventData.file)
   }
   const token = getToken()
   const response = await axios.post(`${API_URL}/event`, formData, {
@@ -87,7 +96,10 @@ export const createEvent = async (eventData) => {
 export const updateEvent = async (id, eventData) => {
   const formData = new FormData()
   formData.append('name', eventData.name)
-  formData.append('description', eventData.description)
+  formData.append('start_date', eventData.start_date)
+  const endDate = addOneDay(eventData.start_date);
+  formData.append('end_date', endDate);
+  formData.append('location', eventData.location)
   if (eventData.file) {
     formData.append('file', eventData.file)
   }
@@ -126,6 +138,7 @@ export const createPuppet = async (puppetData) => {
   if (puppetData.file) {
     formData.append('file', puppetData.file)
   }
+  formData.append('type', puppetData.type)
   const token = getToken()
   const response = await axios.post(`${API_URL}/puppet`, formData, {
     headers: {
@@ -161,21 +174,18 @@ export const deletePuppet = async (id) => {
     },
   })
 }
-
-
 export const getMuseums = async () => {
   return await axios.get(`${API_URL}/museums/all`, {
     headers: {
       Authorization: `Bearer ${getToken()}`,
     },
-  })
-}
-
+  });
+};
 
 export const createMuseum = async (museumData, operatingHours, tickets, collections) => {
   const formData = new FormData();
   formData.append('name', museumData.name);
-  formData.append('description', museumData.description);
+  formData.append('about', museumData.about);
   if (museumData.file) {
     formData.append('file', museumData.file);
   }
@@ -246,4 +256,12 @@ export const updateMuseum = async (id, museumData, operatingHours, tickets, coll
   });
 
   return museumResponse.data;
+};
+
+export const deleteMuseum = async (id) => {
+  return await axios.delete(`${API_URL}/museums/${id}`, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
 };

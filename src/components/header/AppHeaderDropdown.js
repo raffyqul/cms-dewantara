@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   CAvatar,
@@ -7,6 +7,7 @@ import {
   CDropdownItem,
   CDropdownMenu,
   CDropdownToggle,
+  CSpinner,
 } from '@coreui/react'
 import { cilExitToApp } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
@@ -15,9 +16,11 @@ import axios from 'axios'
 import avatar8 from './../../assets/images/avatars/8.jpg'
 
 const AppHeaderDropdown = () => {
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
   const handleLogout = async () => {
+    setLoading(true)
     try {
       const token = localStorage.getItem('token')
       await axios.post(
@@ -34,6 +37,7 @@ const AppHeaderDropdown = () => {
     } catch (error) {
       console.error('Logout failed:', error)
     }
+    setLoading(false)
   }
 
   return (
@@ -43,11 +47,16 @@ const AppHeaderDropdown = () => {
       </CDropdownToggle>
       <CDropdownMenu className="pt-0" placement="bottom-end">
         <CDropdownHeader className="bg-body-secondary fw-semibold mb-2">Account</CDropdownHeader>
-        <CDropdownItem href="#" onClick={handleLogout}>
+        <CDropdownItem href="#" onClick={handleLogout} disabled={loading}>
           <CIcon icon={cilExitToApp} className="me-2" />
-          Logout
+          {loading ? <CSpinner size="sm" /> : 'Logout'}
         </CDropdownItem>
       </CDropdownMenu>
+      {loading && (
+        <div className="overlay">
+          <CSpinner />
+        </div>
+      )}
     </CDropdown>
   )
 }
